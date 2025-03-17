@@ -1,0 +1,39 @@
+FROM nvcr.io/nvidia/tritonserver:24.04-py3
+
+WORKDIR /app
+
+# Install additional packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    wget \
+    git \
+    python3-pip \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt /app/requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Create model repository directory
+RUN mkdir -p /models
+
+# Copy startup script
+COPY deployment/docker/start_triton.sh /app/start_triton.sh
+RUN chmod +x /app/start_triton.sh
+
+# Environment variables
+ENV MODEL_REPOSITORY=/models
+ENV CUDA_VISIBLE_DEVICES=0
+ENV HTTP_PORT=8000
+ENV GRPC_PORT=8001
+ENV METRICS_PORT=8002
+ENV MODEL_CONTROL_MODE=explicit
+
+# Expose Triton ports
+EXPOSE ${HTTP_PORT}
+EXPOSE ${GRPC_PORT}
+EXPOSE ${METRICS_PORT}
+
+# Start Triton server
+ENTRYPOINT ["/app/start_triton.sh"] 

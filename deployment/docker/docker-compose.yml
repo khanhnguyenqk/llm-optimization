@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  triton:
+    build:
+      context: ../../
+      dockerfile: deployment/docker/Dockerfile.triton
+    image: mistral-triton:latest
+    container_name: mistral-triton
+    restart: unless-stopped
+    ports:
+      - "8000:8000"  # HTTP port
+      - "8001:8001"  # gRPC port
+      - "8002:8002"  # Metrics port
+    volumes:
+      - ../../deployment/triton/model_repository:/models
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - MODEL_REPOSITORY=/models
+      - HTTP_PORT=8000
+      - GRPC_PORT=8001
+      - METRICS_PORT=8002
+      - MODEL_CONTROL_MODE=explicit
+      - LOG_VERBOSE=1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  triton-client:
+    image: mistral-triton-client:latest
+    build:
+      context: ../../
+      dockerfile: deployment/docker/Dockerfile.client
+    container_name: mistral-triton-client
+    depends_on:
+      - triton
+    volumes:
+      - ../../benchmarks:/benchmarks
+    environment:
+      - TRITON_SERVER_URL=triton:8000
+    command: tail -f /dev/null  # Keep container running 

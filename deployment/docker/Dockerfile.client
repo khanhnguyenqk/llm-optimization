@@ -1,0 +1,41 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install additional client-specific dependencies
+RUN pip install --no-cache-dir \
+    tritonclient[all] \
+    matplotlib \
+    pandas \
+    seaborn \
+    notebook \
+    ipywidgets
+
+# Copy benchmark and client code
+COPY benchmarks /app/benchmarks
+COPY scripts /app/scripts
+
+# Set environment variables
+ENV PYTHONPATH=/app:$PYTHONPATH
+ENV TRITON_SERVER_URL=triton:8000
+
+# Create a non-root user
+RUN useradd -m -u 1000 triton-client
+USER triton-client
+
+# Create directory for benchmark results
+RUN mkdir -p /app/benchmarks/results /app/benchmarks/results/plots
+
+# Command to run a benchmark
+CMD ["python", "/app/benchmarks/run_benchmark.py", "--backend", "triton", "--model_path", "/app/models/Mistral-7B-v0.1", "--batch_sizes", "1,2,4,8", "--sequence_lengths", "128,512,1024", "--triton_url", "${TRITON_SERVER_URL}", "--triton_protocol", "http"] 
