@@ -23,7 +23,8 @@ llm-optimization/
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.12.6+
+- Poetry (for dependency management)
 - CUDA compatible GPU (for training and optimization)
 - Docker (for containerization)
 - Kubernetes cluster (for deployment)
@@ -36,16 +37,23 @@ git clone https://github.com/yourusername/llm-optimization.git
 cd llm-optimization
 ```
 
-2. Create a virtual environment:
+2. Install dependencies with Poetry:
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Install Poetry if you don't have it
+# curl -sSL https://install.python-poetry.org | python3 -
+
+# Install project dependencies
+poetry install
 ```
 
-3. Install dependencies:
+3. Activate the Poetry virtual environment:
 ```bash
-pip install -r requirements.txt
+poetry shell
 ```
+
+> **Note**: All commands in the following sections can be run either:
+> - Within an activated Poetry shell (after running `poetry shell`), or
+> - By prefixing commands with `poetry run` if you're not in the Poetry shell
 
 ## Workflow
 
@@ -115,3 +123,58 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Mistral AI](https://mistral.ai/) for the base model
 - [Hugging Face Transformers](https://huggingface.co/docs/transformers/index) for model implementation
 - [NVIDIA Triton Inference Server](https://github.com/triton-inference-server/server) for deployment
+
+# Model Optimization
+
+This repository contains scripts for downloading and optimizing large language models.
+
+## Setup
+
+1. Install the required dependencies:
+```bash
+# Install Poetry if you don't have it
+# curl -sSL https://install.python-poetry.org | python3 -
+
+# Install project dependencies
+poetry install
+```
+
+2. Set up your Hugging Face token:
+   - Copy `.env.example` to `.env`
+   - Replace `your_token_here` with your actual Hugging Face token from https://huggingface.co/settings/tokens
+
+## Downloading Models
+
+You can download models using the `download_model.py` script:
+
+```bash
+# If already in a Poetry shell:
+python ./scripts/download_model.py --model "MODEL_ID" --output_dir "OUTPUT_PATH"
+
+# Or alternatively:
+poetry run python ./scripts/download_model.py --model "MODEL_ID" --output_dir "OUTPUT_PATH"
+```
+
+### Options
+
+- `--model`: The model ID on the Hugging Face Hub (required)
+- `--output_dir`: Directory to save the model to (required)
+- `--force_download`: Force redownload even if files exist locally
+- `--test`: Run a quick test inference after download
+- `--fp16`: Download model in fp16 precision
+- `--token`: Directly provide a Hugging Face token (overrides the one in .env)
+
+### Example
+
+```bash
+python ./scripts/download_model.py --model "mistralai/Mistral-7B-v0.1" --output_dir "./models/Mistral-7B-v0_1"
+```
+
+## Accessing Gated Models
+
+For gated models (like some versions of Mistral), you need to:
+
+1. Make sure you have been granted access to the model on the Hugging Face Hub
+2. Provide your Hugging Face token either:
+   - In the `.env` file as `HF_TOKEN=your_token_here`
+   - Or directly via the command line: `--token "your_token_here"`

@@ -246,7 +246,7 @@ def benchmark_pytorch(model, tokenizer, prompt, batch_size, num_iterations, warm
         dict: Benchmark results
     """
     # Create input batch
-    inputs = tokenizer([prompt] * batch_size, return_tensors="pt", padding=True)
+    inputs = tokenizer([prompt] * batch_size, return_tensors="pt", padding=False)
     inputs = {k: v.to(model.device) for k, v in inputs.items()}
     
     # Warm up

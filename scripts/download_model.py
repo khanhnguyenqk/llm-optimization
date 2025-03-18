@@ -6,13 +6,17 @@ Download and prepare Mistral 7B models from Hugging Face
 """
 
 import argparse
-import os
 import logging
+import os
 from pathlib import Path
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 from huggingface_hub import snapshot_download
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -26,14 +30,14 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Download and prepare a model from Hugging Face")
     parser.add_argument(
         "--model", 
+        required=True,
         type=str, 
-        default="mistralai/Mistral-7B-v0.1", 
         help="Model ID on Hugging Face Hub"
     )
     parser.add_argument(
         "--output_dir", 
         type=str, 
-        default=None, 
+        required=True,
         help="Output directory for model files"
     )
     parser.add_argument(
@@ -51,9 +55,14 @@ def parse_args():
         action="store_true", 
         help="Download model in fp16 precision"
     )
+    parser.add_argument(
+        "--token",
+        type=str,
+        help="Hugging Face API token (overrides HF_TOKEN from .env)"
+    )
     return parser.parse_args()
 
-def download_model(model_id, output_dir=None, force_download=False, fp16=False):
+def download_model(model_id, output_dir, force_download=False, fp16=False, token=None):
     """
     Download model and tokenizer from Hugging Face
     
@@ -62,20 +71,23 @@ def download_model(model_id, output_dir=None, force_download=False, fp16=False):
         output_dir: Directory to save the model to
         force_download: Whether to force redownload
         fp16: Whether to download in fp16 precision
+        token: Hugging Face API token
     
     Returns:
         tuple: (model, tokenizer)
     """
     logger.info(f"Downloading model: {model_id}")
     
-    # Determine output directory
-    if output_dir is None:
-        output_dir = os.path.join("models", model_id.split("/")[-1])
-    
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     
     logger.info(f"Model will be saved to: {output_dir}")
+    
+    # Get token from environment variable if not provided
+    if token is None:
+        token = os.getenv("HF_TOKEN")
+        if not token:
+            logger.warning("No Hugging Face token provided. If the model is gated, download will fail.")
     
     # Download model
     try:
@@ -84,6 +96,7 @@ def download_model(model_id, output_dir=None, force_download=False, fp16=False):
             repo_id=model_id,
             local_dir=output_dir,
             force_download=force_download,
+            token=token,
         )
         
         # Then load the model and tokenizer
@@ -92,8 +105,9 @@ def download_model(model_id, output_dir=None, force_download=False, fp16=False):
             output_dir,
             torch_dtype=torch_dtype,
             device_map="auto",
+            token=token,
         )
-        tokenizer = AutoTokenizer.from_pretrained(output_dir)
+        tokenizer = AutoTokenizer.from_pretrained(output_dir, token=token)
         
         logger.info(f"Successfully downloaded and loaded model: {model_id}")
         return model, tokenizer
@@ -131,7 +145,8 @@ def main():
         args.model, 
         args.output_dir, 
         args.force_download,
-        args.fp16
+        args.fp16,
+        args.token
     )
     
     if args.test:
