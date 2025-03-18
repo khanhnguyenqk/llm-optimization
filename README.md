@@ -161,13 +161,16 @@ poetry run python ./scripts/download_model.py --model "MODEL_ID" --output_dir "O
 - `--output_dir`: Directory to save the model to (required)
 - `--force_download`: Force redownload even if files exist locally
 - `--test`: Run a quick test inference after download
-- `--fp16`: Download model in fp16 precision
+- `--precision`: Precision to load the model in (choices: "float32", "float16", "bfloat16", default: "float32")
 - `--token`: Directly provide a Hugging Face token (overrides the one in .env)
 
 ### Example
 
 ```bash
 python ./scripts/download_model.py --model "mistralai/Mistral-7B-v0.1" --output_dir "./models/Mistral-7B-v0_1"
+
+# Download in half precision
+python ./scripts/download_model.py --model "mistralai/Mistral-7B-v0.1" --output_dir "./models/Mistral-7B-v0_1" --precision "float16"
 ```
 
 ## Accessing Gated Models

@@ -51,9 +51,11 @@ def parse_args():
         help="Run a quick test inference after download"
     )
     parser.add_argument(
-        "--fp16", 
-        action="store_true", 
-        help="Download model in fp16 precision"
+        "--precision",
+        type=str,
+        choices=["float32", "float16", "bfloat16"],
+        default="float32",
+        help="Precision to load the model in (default: float32)"
     )
     parser.add_argument(
         "--token",
@@ -62,7 +64,7 @@ def parse_args():
     )
     return parser.parse_args()
 
-def download_model(model_id, output_dir, force_download=False, fp16=False, token=None):
+def download_model(model_id, output_dir, force_download=False, precision="float32", token=None):
     """
     Download model and tokenizer from Hugging Face
     
@@ -70,7 +72,7 @@ def download_model(model_id, output_dir, force_download=False, fp16=False, token
         model_id: The model ID on the Hugging Face Hub
         output_dir: Directory to save the model to
         force_download: Whether to force redownload
-        fp16: Whether to download in fp16 precision
+        precision: Precision to load the model in (float32, float16, or bfloat16)
         token: Hugging Face API token
     
     Returns:
@@ -82,12 +84,21 @@ def download_model(model_id, output_dir, force_download=False, fp16=False, token
     output_dir.mkdir(parents=True, exist_ok=True)
     
     logger.info(f"Model will be saved to: {output_dir}")
+    logger.info(f"Loading model with precision: {precision}")
     
     # Get token from environment variable if not provided
     if token is None:
         token = os.getenv("HF_TOKEN")
         if not token:
             logger.warning("No Hugging Face token provided. If the model is gated, download will fail.")
+    
+    # Map precision string to torch dtype
+    dtype_map = {
+        "float32": torch.float32,
+        "float16": torch.float16,
+        "bfloat16": torch.bfloat16
+    }
+    torch_dtype = dtype_map[precision]
     
     # Download model
     try:
@@ -100,7 +111,6 @@ def download_model(model_id, output_dir, force_download=False, fp16=False, token
         )
         
         # Then load the model and tokenizer
-        torch_dtype = torch.float16 if fp16 else torch.float32
         model = AutoModelForCausalLM.from_pretrained(
             output_dir,
             torch_dtype=torch_dtype,
@@ -145,7 +155,7 @@ def main():
         args.model, 
         args.output_dir, 
         args.force_download,
-        args.fp16,
+        args.precision,
         args.token
     )
     
