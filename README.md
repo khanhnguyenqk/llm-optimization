@@ -91,6 +91,16 @@ python scripts/deployment/prepare_triton_model.py --model_path models/Mistral-7B
 python benchmarks/run_benchmark.py --model_path models/Mistral-7B-v0.1-GPTQ --batch_sizes 1,2,4,8 --sequence_lengths 128,512,1024
 ```
 
+For running benchmarks with specific precision:
+
+```bash
+# Benchmark with FP16 precision
+python benchmarks/run_benchmark.py --model_path models/Mistral-7B-v0.1 --batch_sizes 1,2,4,8 --precision float16 
+
+# Benchmark with BF16 precision (useful for some newer GPUs)
+python benchmarks/run_benchmark.py --model_path models/Mistral-7B-v0.1 --batch_sizes 1,2,4,8 --precision bfloat16
+```
+
 ## Deployment
 
 ### Docker

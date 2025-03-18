@@ -108,19 +108,27 @@ def parse_args():
         help="Protocol to use for Triton Inference Server"
     )
     parser.add_argument(
+        "--precision",
+        type=str,
+        choices=["float32", "float16", "bfloat16"],
+        default="float32",
+        help="Precision to load the model in (default: float32)"
+    )
+    parser.add_argument(
         "--use_cuda", 
         action="store_true",
         help="Use CUDA for inference"
     )
     return parser.parse_args()
 
-def load_pytorch_model(model_path: str, use_cuda: bool) -> Tuple[Any, Any]:
+def load_pytorch_model(model_path: str, use_cuda: bool, precision: str = "float32") -> Tuple[Any, Any]:
     """
     Load a PyTorch model for benchmarking.
     
     Args:
         model_path: Path to the model
         use_cuda: Whether to use CUDA
+        precision: Precision to load the model in (float32, float16, or bfloat16)
         
     Returns:
         tuple: (model, tokenizer)
@@ -133,11 +141,21 @@ def load_pytorch_model(model_path: str, use_cuda: bool) -> Tuple[Any, Any]:
     else:
         logger.info("Using CPU for inference")
     
+    logger.info(f"Loading model with precision: {precision}")
+    
+    # Map precision string to torch dtype
+    dtype_map = {
+        "float32": torch.float32,
+        "float16": torch.float16,
+        "bfloat16": torch.bfloat16
+    }
+    torch_dtype = dtype_map[precision]
+    
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
         device_map="auto" if device == "cuda" else None,
-        torch_dtype=torch.float16 if device == "cuda" else torch.float32
+        torch_dtype=torch_dtype
     )
     
     if device == "cpu":
@@ -145,13 +163,14 @@ def load_pytorch_model(model_path: str, use_cuda: bool) -> Tuple[Any, Any]:
     
     return model, tokenizer
 
-def load_onnx_model(model_path: str, use_cuda: bool) -> Tuple[Any, Any]:
+def load_onnx_model(model_path: str, use_cuda: bool, precision: str = "float32") -> Tuple[Any, Any]:
     """
     Load an ONNX model for benchmarking.
     
     Args:
         model_path: Path to the model
         use_cuda: Whether to use CUDA
+        precision: Precision to load the model in (float32, float16, or bfloat16)
         
     Returns:
         tuple: (model, tokenizer)
@@ -160,6 +179,7 @@ def load_onnx_model(model_path: str, use_cuda: bool) -> Tuple[Any, Any]:
         raise ImportError("ONNX Runtime is not installed. Please install it with: pip install onnxruntime-gpu")
     
     logger.info(f"Loading ONNX model from {model_path}")
+    logger.info(f"Requested precision: {precision} (Note: ONNX model precision is determined by the exported model)")
     
     # Check if model is in ONNX format
     onnx_path = None
@@ -499,9 +519,9 @@ def run_benchmark(args):
     
     # Load model and tokenizer based on the backend
     if args.backend == "pytorch":
-        model, tokenizer = load_pytorch_model(args.model_path, args.use_cuda)
+        model, tokenizer = load_pytorch_model(args.model_path, args.use_cuda, args.precision)
     elif args.backend == "onnx":
-        model, tokenizer = load_onnx_model(args.model_path, args.use_cuda)
+        model, tokenizer = load_onnx_model(args.model_path, args.use_cuda, args.precision)
     elif args.backend == "triton":
         client = create_triton_client(args)
         model_name = args.triton_model_name or os.path.basename(args.model_path)
