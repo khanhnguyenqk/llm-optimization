@@ -1,0 +1,54 @@
+[
+  {
+    "backend": "pytorch",
+    "batch_size": 1,
+    "prompt_length": 20,
+    "avg_latency_ms": 720.6460952758789,
+    "p95_latency_ms": 720.9050178527832,
+    "p99_latency_ms": 720.9248924255371,
+    "throughput_samples_per_sec": 1.3876399160065598,
+    "memory_mb": 14343.056640625,
+    "model": "Mistral-7B-v0_1",
+    "sequence_length": 128,
+    "device": "cuda"
+  },
+  {
+    "backend": "pytorch",
+    "batch_size": 1,
+    "prompt_length": 97,
+    "avg_latency_ms": 736.6201400756836,
+    "p95_latency_ms": 736.7573261260986,
+    "p99_latency_ms": 736.7618656158447,
+    "throughput_samples_per_sec": 1.3575489918615107,
+    "memory_mb": 14370.609375,
+    "model": "Mistral-7B-v0_1",
+    "sequence_length": 512,
+    "device": "cuda"
+  },
+  {
+    "backend": "pytorch",
+    "batch_size": 2,
+    "prompt_length": 20,
+    "avg_latency_ms": 747.692060470581,
+    "p95_latency_ms": 747.762393951416,
+    "p99_latency_ms": 747.7630043029785,
+    "throughput_samples_per_sec": 2.674892374315956,
+    "memory_mb": 14370.609375,
+    "model": "Mistral-7B-v0_1",
+    "sequence_length": 128,
+    "device": "cuda"
+  },
+  {
+    "backend": "pytorch",
+    "batch_size": 2,
+    "prompt_length": 97,
+    "avg_latency_ms": 786.414384841919,
+    "p95_latency_ms": 786.6954326629639,
+    "p99_latency_ms": 786.7599391937256,
+    "throughput_samples_per_sec": 2.543183231923622,
+    "memory_mb": 14409.505859375,
+    "model": "Mistral-7B-v0_1",
+    "sequence_length": 512,
+    "device": "cuda"
+  }
+]
